@@ -1,0 +1,19 @@
+.videos {
+    display: grid;
+    grid-auto-flow: column;
+    grid-gap: 10px;
+    margin: 30px;
+    overflow: auto;
+}
+.videos::-webkit-scrollbar {
+    display: none;
+  }
+.video-container {
+    height: 80vh;
+}
+.active {
+    opacity: 1 !important;
+}
+.video {
+    opacity: .5;
+}
