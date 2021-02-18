@@ -9,23 +9,22 @@ const ListView = () => {
     const [html, setHtml] = useState<string>('');
     const [active, setActive] = useState<string>('');
     const [redditData, setRedditData] = useState<RedditResponse<RedditData> | null>(null)
-    // const { data, setData } = useContext(AppContext);
+    const { data, setData } = useContext(AppContext);
 
     useEffect(() => {
-        if (!redditData) {
-            fetch().then(resp => {
-                if (resp) {
-                    // setData(resp);
-                    setRedditData(resp);
-                }
-            });
+        const get = async () => {
+            const resp = await fetch();
+            if (resp) {
+                setRedditData(resp);
+            }
         }
-    });
+        get();
+    }, [data]);
 
     const click = (data: RedditPost): void => {
         const decoded = decodeHTML(data.media_embed.content)
         setActive(data.id);
-        setHtml(decoded)
+        setHtml(decoded);
     };
 
     const decodeHTML = (html: string) => {
@@ -36,8 +35,7 @@ const ListView = () => {
     };
 
     const fetch = async (params = '') => {
-        const sub = "videos";
-        const url = `https://www.reddit.com/r/${sub}/hot/.json?limit=100${params}`
+        const url = `https://www.reddit.com/r/${data}/hot/.json?limit=100${params}`
         const resp = await get<RedditResponse<RedditData>>(url);
         if (resp instanceof Error) {
             return;
@@ -53,12 +51,7 @@ const ListView = () => {
             if (resp?.data.children.length && redditData?.data.children.length) {
                 const newData = [...redditData?.data.children, ...resp?.data.children]
                 resp.data.children = newData;
-
-                // setData(resp);
                 setRedditData(resp);
-
-                // console.log(data.data.children.length)
-
             }
         }
     }
