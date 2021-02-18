@@ -6,3 +6,10 @@
     height:5px;
     cursor: pointer;
 }
+.container {
+    display:grid;
+}
+
+.custom-input {
+    align-self: end;
+}
