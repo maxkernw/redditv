@@ -1,12 +1,26 @@
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { AppContext } from '../AppContext';
-import { RedditPost } from '../httpservice/response';
+import get from '../httpservice/http.service';
+import { RedditData, RedditPost, RedditResponse } from '../httpservice/response';
 import ListItem from '../listItem/ListItem';
 import './ListView.css';
 
 const ListView = () => {
-    const [html, setHtml] = useState<string>('null');
-    const [active, setActive] = useState<string>('null');
+    const [html, setHtml] = useState<string>('');
+    const [active, setActive] = useState<string>('');
+    const [redditData, setRedditData] = useState<RedditResponse<RedditData> | null>(null)
+    // const { data, setData } = useContext(AppContext);
+
+    useEffect(() => {
+        if (!redditData) {
+            fetch().then(resp => {
+                if (resp) {
+                    // setData(resp);
+                    setRedditData(resp);
+                }
+            });
+        }
+    });
 
     const click = (data: RedditPost): void => {
         const decoded = decodeHTML(data.media_embed.content)
@@ -21,10 +35,37 @@ const ListView = () => {
         return txt.value;
     };
 
-    const msg = useContext(AppContext)
+    const fetch = async (params = '') => {
+        const sub = "videos";
+        const url = `https://www.reddit.com/r/${sub}/hot/.json?limit=100${params}`
+        const resp = await get<RedditResponse<RedditData>>(url);
+        if (resp instanceof Error) {
+            return;
+        }
+        return resp;
+    }
 
-    if (msg?.data) {
-        const items = msg.data.children.reduce<JSX.Element[]>((acc, elem) => {
+    const handleScroll = async (event: React.UIEvent<HTMLDivElement, UIEvent>) => {
+        const div = event.target as HTMLDivElement;
+        const loadMore = div.scrollWidth - div.clientWidth === div.scrollLeft;
+        if (loadMore) {
+            const resp = await fetch(`&after=${redditData?.data.after}&count=100`);
+            if (resp?.data.children.length && redditData?.data.children.length) {
+                const newData = [...redditData?.data.children, ...resp?.data.children]
+                resp.data.children = newData;
+
+                // setData(resp);
+                setRedditData(resp);
+
+                // console.log(data.data.children.length)
+
+            }
+        }
+    }
+
+
+    if (redditData?.data) {
+        const items = redditData.data.children.reduce<JSX.Element[]>((acc, elem) => {
             if (!elem.data.thumbnail) {
                 return acc;
             }
@@ -36,7 +77,7 @@ const ListView = () => {
         return (
             <div className='test'>
                 <div className='video-container' dangerouslySetInnerHTML={{ __html: html }} />
-                <div className='videos'>{items}</div>
+                <div onScroll={e => handleScroll(e)} className='videos'>{items}</div>
             </div>)
     }
     return (<h1>Loading</h1>)
